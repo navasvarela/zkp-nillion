@@ -1,0 +1,23 @@
+[package]
+name = "zkp-nillion"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]  # Bin that runs the ZKP Server
+name="zkp-server"
+path="src/server.rs"
+
+[[bin]] # Bin that runs the ZKP Client 
+name="zkp-client"
+path="src/client.rs"
+
+[dependencies]
+num-bigint = "0.4.3"
+rand = "0.8.5"
+tonic = "0.8.2"
+tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"]}
+prost = "0.11.0"
+
+
+[build-dependencies]
+tonic-build = "0.8.2"
