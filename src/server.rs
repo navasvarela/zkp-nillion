@@ -1,3 +1,5 @@
+use rand::Rng;
+use store::{RegistrationStore, Store, AuthenticationStore, RegistrationSecret, Authentication};
 use tonic::{transport::Server, Request, Response, Status};
 
 use zkp_auth::auth_server::{Auth, AuthServer};
@@ -6,12 +8,19 @@ use zkp_auth::{
     AuthenticationChallengeResponse, RegisterRequest, RegisterResponse,
 };
 
+use uuid::Uuid;
+
+mod store;
+
 pub mod zkp_auth {
     tonic::include_proto!(r#"zkp_auth"#); 
 }
 
 #[derive(Debug, Default)]
-pub struct MyAuth {}
+pub struct MyAuth {
+  registrationStore: store::RegistrationStore,
+  authenticationStore: store::AuthenticationStore,
+}
 
 #[tonic::async_trait]
 impl Auth for MyAuth {
@@ -19,7 +28,14 @@ impl Auth for MyAuth {
         &self,
         request: Request<RegisterRequest>,
     ) -> Result<Response<RegisterResponse>, Status> {
-        println!("Got a request: {:?}", request);
+        let _register_request = request.into_inner();
+        let registration = RegistrationSecret{
+          y1: _register_request.y1,
+          y2: _register_request.y2
+        };  
+        
+        let user = _register_request.user.clone();
+        self.registrationStore.insert(user, registration);
 
         let reply = zkp_auth::RegisterResponse {};
 
@@ -30,10 +46,20 @@ impl Auth for MyAuth {
       &self,
       request: Request<AuthenticationChallengeRequest>,
     ) -> Result<Response<AuthenticationChallengeResponse>, Status> {
-      
+      let challenge = request.into_inner();
+      let auth_id = Uuid::new_v4().to_string();
+      let c: i64 = rand::thread_rng().gen();
+      let authentication = Authentication {
+        c,
+        r1: challenge.r1,
+        r2: challenge.r2
+      };
+
+      self.authenticationStore.insert(auth_id.clone(), authentication);
+
       let reply = zkp_auth::AuthenticationChallengeResponse {
-        c: 2,
-        auth_id: "1".to_owned()
+        c,
+        auth_id: auth_id.clone(),
       };
 
       Ok(Response::new(reply))
@@ -56,7 +82,10 @@ impl Auth for MyAuth {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-    let auth = MyAuth::default();
+    let auth = MyAuth{
+      registrationStore: RegistrationStore::new(),
+      authenticationStore: AuthenticationStore::new()
+    };
 
     Server::builder()
         .add_service(AuthServer::new(auth))
