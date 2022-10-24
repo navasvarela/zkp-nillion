@@ -37,6 +37,9 @@ The client has hardcoded steps. This was done for simplicity.
 
 Ideally the client should offer some sort of interactivity. Perhaps via a command line interface or a REST API. 
 
+### Session storage
+
+
 
 
 

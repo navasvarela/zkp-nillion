@@ -38,6 +38,8 @@ impl Auth for MyAuth {
         let user = _register_request.user.clone();
         self.registration_store.insert(user, registration);
 
+        self.registrations.insert(request.into_inner().user, UserSecret { y1: request.into_inner().y1, y2: request.into_inner().y2 });
+
         let reply = zkp_auth::RegisterResponse {};
 
         Ok(Response::new(reply))
