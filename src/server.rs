@@ -1,14 +1,15 @@
 use rand::Rng;
 use store::{RegistrationStore, Store, AuthenticationStore, RegistrationSecret, Authentication};
 use tonic::{transport::Server, Request, Response, Status};
+use uuid::Uuid;
 
 use zkp_auth::auth_server::{Auth, AuthServer};
 use zkp_auth::{
     AuthenticationAnswerRequest, AuthenticationAnswerResponse, AuthenticationChallengeRequest,
-    AuthenticationChallengeResponse, RegisterRequest, RegisterResponse,
+    AuthenticationChallengeResponse, RegisterRequest, RegisterResponse, InitialiseRequest, InitialiseResponse,
 };
 
-use uuid::Uuid;
+mod zkp_crypto;
 
 mod store;
 
@@ -18,8 +19,8 @@ pub mod zkp_auth {
 
 #[derive(Debug, Default)]
 pub struct MyAuth {
-  registrationStore: store::RegistrationStore,
-  authenticationStore: store::AuthenticationStore,
+  registration_store: store::RegistrationStore,
+  authentication_store: store::AuthenticationStore,
 }
 
 #[tonic::async_trait]
@@ -35,7 +36,7 @@ impl Auth for MyAuth {
         };  
         
         let user = _register_request.user.clone();
-        self.registrationStore.insert(user, registration);
+        self.registration_store.insert(user, registration);
 
         let reply = zkp_auth::RegisterResponse {};
 
@@ -55,7 +56,7 @@ impl Auth for MyAuth {
         r2: challenge.r2
       };
 
-      self.authenticationStore.insert(auth_id.clone(), authentication);
+      self.authentication_store.insert(auth_id.clone(), authentication);
 
       let reply = zkp_auth::AuthenticationChallengeResponse {
         c,
@@ -76,6 +77,21 @@ impl Auth for MyAuth {
 
       Ok(Response::new(reply))
     }
+
+    async fn initialise(
+      &self,
+      request: Request<InitialiseRequest>,
+    ) -> Result<Response<InitialiseResponse>, Status> {
+      let keys = zkp_crypto::generate_keys();
+
+      let reply = zkp_auth::InitialiseResponse{
+        g: keys.0,
+        h: keys.1,
+        q: keys.2
+      };
+
+      Ok(Response::new(reply))
+    }
     
 }
 
@@ -83,8 +99,8 @@ impl Auth for MyAuth {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
     let auth = MyAuth{
-      registrationStore: RegistrationStore::new(),
-      authenticationStore: AuthenticationStore::new()
+      registration_store: RegistrationStore::new(),
+      authentication_store: AuthenticationStore::new()
     };
 
     Server::builder()

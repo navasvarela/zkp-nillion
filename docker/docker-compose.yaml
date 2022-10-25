@@ -1,0 +1,12 @@
+version="3"
+
+services:
+  server:
+    build: docker/Dockerfile-server
+    command: zkp-server
+    ports:
+      - 10000:10000
+  
+  client: 
+    build: docker/Dockerfile-client
+    command: zkp-client

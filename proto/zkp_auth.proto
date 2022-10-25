@@ -8,6 +8,17 @@ message RegisterRequest {
     int64 y2 = 3;
 }
 
+message InitialiseResponse {
+    // First generator of Group G
+    int64 g = 1;
+    // Second generator of Group G
+    int64 h = 2;
+    // Prime number, order of Group G
+    int64 q = 3;
+}
+
+message InitialiseRequest {}
+
 message RegisterResponse {}
 
 message AuthenticationChallengeRequest { 
@@ -29,6 +40,7 @@ message AuthenticationAnswerResponse {
     string session_id = 1;
 }
 service Auth {
+    rpc Initialise(InitialiseRequest) returns (InitialiseResponse) {}
     rpc Register(RegisterRequest) returns (RegisterResponse) {}
     rpc CreateAuthenticationChallenge(AuthenticationChallengeRequest) returns (AuthenticationChallengeResponse) {}
     rpc VerifyAuthentication(AuthenticationAnswerRequest) returns (AuthenticationAnswerResponse) {} 

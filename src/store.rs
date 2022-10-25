@@ -7,13 +7,13 @@
 
 use std::{sync::{Arc, Mutex}, collections::HashMap};
 
-#[derive(Clone,Debug,Default)]
+#[derive(Clone,Debug,Default,PartialEq,Eq)]
 pub struct RegistrationSecret {
     pub y1: i64,
     pub y2: i64,
 }
 
-#[derive(Clone,Debug,Default)]
+#[derive(Clone,Debug,Default,PartialEq,Eq)]
 pub struct Authentication {
     pub r1: i64,
     pub r2: i64,
@@ -77,3 +77,36 @@ impl Store<Authentication> for AuthenticationStore {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_registration_store_insert() {
+        // Setup
+        let store = RegistrationStore::new();
+        let secret = RegistrationSecret { y1: 1, y2: 2 };
+        // Test
+        store.insert("user".to_string(), secret.clone());
+
+        // Assert
+        assert_eq!(secret.clone(), store.get("user".to_string()).unwrap());
+        
+    }
+
+    #[test]
+    fn test_authentication_store_insert() {
+        // Setup
+        let store = AuthenticationStore::new();
+        let authentication = Authentication { r1: 1, r2: 2, c:3 };
+        // Test
+        store.insert("auth_id".to_string(), authentication.clone());
+
+        // Assert
+        assert_eq!(authentication.clone(), store.get("auth_id".to_string()).unwrap());
+    }
+
+    
+}
+
