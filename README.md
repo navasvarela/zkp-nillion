@@ -37,7 +37,11 @@ The client has hardcoded steps. This was done for simplicity.
 
 Ideally the client should offer some sort of interactivity. Perhaps via a command line interface or a REST API. 
 
-### Session storage
+### Numbers
+
+The solution is implemented using primitive types i64. There are limitations in that some operations, notably exponentiation, do not support 64 bit integers in Rust. Also overflow is an issue as it is relatively easy to exceed the boundaries of 64 bit integers when using powers of big numbers.
+
+Ideally, the solution would work with BigInt types. Changes should be made in several places. The gRPC specification needs to replace `int64` by `String` types. 
 
 
 

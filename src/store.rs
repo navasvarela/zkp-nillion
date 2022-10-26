@@ -18,6 +18,7 @@ pub struct Authentication {
     pub r1: i64,
     pub r2: i64,
     pub c: i64,
+    pub user: String,
 }
 
 #[derive(Clone,Debug,Default)]
@@ -99,7 +100,7 @@ mod tests {
     fn test_authentication_store_insert() {
         // Setup
         let store = AuthenticationStore::new();
-        let authentication = Authentication { r1: 1, r2: 2, c:3 };
+        let authentication = Authentication { r1: 1, r2: 2, c:3, user: "Test User".to_string() };
         // Test
         store.insert("auth_id".to_string(), authentication.clone());
 

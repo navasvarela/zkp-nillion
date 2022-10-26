@@ -20,8 +20,8 @@ use primes::{Sieve,PrimeSet,is_prime};
 pub fn generate_keys() -> (i64,i64,i64) {
     let mut rng = rand::thread_rng();
     // This is the lower limit for the prime p.
-    // For simplicity we generate random numbers up to 1 million. 
-    let lower: u64 = rng.gen_range(1..1_000_000);
+    // For simplicity we generate random numbers up to 100. 
+    let lower: u64 = rng.gen_range(7..200);
 
     // Generate a prime number using Eratostenes's Sieve
     let mut pset = Sieve::new();
@@ -42,14 +42,23 @@ pub fn generate_keys() -> (i64,i64,i64) {
 }
 
 fn find_key(p: i64, q: i64) -> i64 {
+    println!("Finding Key for p:{} and q:{}",p,q);
     let mut rng = rand::thread_rng();
     let mut random: i64;
     let mut key: i64 = 1;
+    let mut overflow;
     let quotient = ((p-1) / q) as u32;
+    let mut try_count = 0;
 
-    while key == 1 {
-        random = rng.gen_range(1..(p-1) as i64);
-        key = random.pow(quotient);
+    while key == 1 && try_count < p/2 {
+        random = rng.gen_range(2..(p-1) as i64);
+        (key, overflow) = random.overflowing_pow(quotient);
+        try_count+=1;
+        if overflow {
+            key = 1;
+        } else if key.overflowing_pow(11).1 {
+            key = 1;
+        }
     }
     println!("Found key: {}", key);
     key
