@@ -9,12 +9,14 @@ message RegisterRequest {
 }
 
 message InitialiseResponse {
+    // Modulus of group G
+    uint64 modulus = 1;
     // First generator of Group G
-    int64 g = 1;
+    uint64 g1 = 2;
     // Second generator of Group G
-    int64 h = 2;
+    uint64 g2 = 3;
     // Prime number, order of Group G
-    int64 q = 3;
+    uint64 order = 4;
 }
 
 message InitialiseRequest {}

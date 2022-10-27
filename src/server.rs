@@ -2,7 +2,7 @@ use rand::Rng;
 use store::{Authentication, AuthenticationStore, RegistrationSecret, RegistrationStore, Store};
 use tonic::{transport::Server, Request, Response, Status};
 use uuid::Uuid;
-
+use verifier::{ChaumPedersenVerifier, ZKPVerifier};
 use zkp_auth::auth_server::{Auth, AuthServer};
 use zkp_auth::{
     AuthenticationAnswerRequest, AuthenticationAnswerResponse, AuthenticationChallengeRequest,
@@ -14,19 +14,19 @@ mod zkp_crypto;
 
 mod store;
 
+mod verifier;
+
 pub mod zkp_auth {
     tonic::include_proto!(r#"zkp_auth"#);
 }
 
 const SERVER_ADDR: &str = "[::1]:50051";
 
-static mut ZKP_KEYS: InitialiseResponse = InitialiseResponse{g:0,h:0,q:0};
-
-
 #[derive(Debug, Default)]
 pub struct MyAuth {
     registration_store: store::RegistrationStore,
     authentication_store: store::AuthenticationStore,
+    verifier: ChaumPedersenVerifier, 
 }
 
 #[tonic::async_trait]
@@ -35,24 +35,24 @@ impl Auth for MyAuth {
     /// 
     /// TODO: Support multiple initialisations?
     /// At the moment the initialisation is stored as global
+    /// Which is not ideal. Alternatively it should be read from some
+    /// configuration file. 
     async fn initialise(
         &self,
         _request: Request<InitialiseRequest>,
     ) -> Result<Response<InitialiseResponse>, Status> {
-        let keys = zkp_crypto::generate_keys();
+        let attrs = &self.verifier.attrs;
 
         let reply = zkp_auth::InitialiseResponse {
-            g: keys.0,
-            h: keys.1,
-            q: keys.2,
-        };
-
-        unsafe {
-          ZKP_KEYS = reply.clone();
-        }
+            modulus: attrs.modulus,
+            order: attrs.order,
+            g1: attrs.first_generator,
+            g2: attrs.second_generator,
+        };       
 
         Ok(Response::new(reply))
     }
+
     async fn register(
         &self,
         request: Request<RegisterRequest>,
@@ -123,19 +123,12 @@ impl Auth for MyAuth {
         };
         // We don't expect to have a problem here though it would be good to do some error 
         // checking nonetheless.
-        let registration = self.registration_store.get(authentication_result.user).unwrap();
+        let registration = self.registration_store.get(authentication_result.user.to_string()).unwrap();
 
-        // To prevent overflows we calculate equalities using logarithms.  
-        // The Chaum-Pedersen original verification is:
-        // r1 = g^s*y1^c (mod q), r2 = h^s*y2^c (mod q)
-        unsafe {
-          let first = (answer_request.s as f64) + authentication_result.c as f64 * (registration.y1 as f64).log(ZKP_KEYS.g as f64) != (authentication_result.r1 as f64).log(ZKP_KEYS.g as f64);
-          let second = (answer_request.s as f64) + authentication_result.c as f64 * (registration.y2 as f64).log(ZKP_KEYS.h as f64) != (authentication_result.r2 as f64).log(ZKP_KEYS.h as f64) ;
-          if first || second {
+     
+        if self.verifier.verify(registration, &authentication_result, answer_request.s) {
             return Err(Status::unauthenticated("Invalid authentication"));
-          }
         }
-        
 
         let reply = zkp_auth::AuthenticationAnswerResponse {
             session_id: Uuid::new_v4().to_string(),
@@ -151,6 +144,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let auth = MyAuth {
         registration_store: RegistrationStore::new(),
         authentication_store: AuthenticationStore::new(),
+        verifier: ChaumPedersenVerifier{
+            attrs:  zkp_crypto::generate_keys(),
+        }
     };
 
     Server::builder()
