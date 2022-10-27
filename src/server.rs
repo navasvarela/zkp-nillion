@@ -127,10 +127,7 @@ impl Auth for MyAuth {
 
         // To prevent overflows we calculate equalities using logarithms.  
         // The Chaum-Pedersen original verification is:
-        // r1 = g^s*y1^c , r2 = h^s*y2^c
-        // Taking logarithms (log base x is log(x)):
-        // r1.log(g) = s +c*y1.log(g) 
-        // r2.log(h) = s + c*y2.log(h)
+        // r1 = g^s*y1^c (mod q), r2 = h^s*y2^c (mod q)
         unsafe {
           let first = (answer_request.s as f64) + authentication_result.c as f64 * (registration.y1 as f64).log(ZKP_KEYS.g as f64) != (authentication_result.r1 as f64).log(ZKP_KEYS.g as f64);
           let second = (answer_request.s as f64) + authentication_result.c as f64 * (registration.y2 as f64).log(ZKP_KEYS.h as f64) != (authentication_result.r2 as f64).log(ZKP_KEYS.h as f64) ;

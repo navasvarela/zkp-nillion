@@ -1,5 +1,8 @@
 //! Sample Client for the ZKP Chaum Pedersen Protocol.
 
+use num::ToPrimitive;
+use num::bigint::BigInt;
+use modpow::modpow;
 use rand::Rng;
 pub mod zkp_auth {
     tonic::include_proto!(r#"zkp_auth"#); 
@@ -27,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let registration = RegisterRequest{
         user: USERNAME.to_owned(),
-        y1: keys.g.pow(secret_x),
+        y1: modpow(&keys.g.to_be(), &BigInt::from(secret_x), &BigInt::from(keys.q)).to_i64(),
         y2: keys.h.pow(secret_x),
     };
 
