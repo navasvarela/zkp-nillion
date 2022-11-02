@@ -18,8 +18,8 @@ pub struct ChaumPedersenProver {
 
 pub trait ZKPProver {
     fn generate_registration_keys(&self,secret: i64) -> (i64,i64);
-    fn generate_commitment(&self,k: i64) -> (i64,i64);
-    fn generate_challenge(&self,k:i64,secret:i64, c: i64) -> i64;
+    fn generate_commitment(&self,k: u32) -> (i64,i64);
+    fn generate_challenge(&self,k:u32,secret:i64, c: i64) -> i64;
 }
 
 impl ZKPProver for ChaumPedersenProver {
@@ -32,7 +32,7 @@ impl ZKPProver for ChaumPedersenProver {
         (first.to_i64().unwrap(),second.to_i64().unwrap())
     }
 
-    fn generate_commitment(&self,k: i64) -> (i64,i64) {
+    fn generate_commitment(&self,k: u32) -> (i64,i64) {
         let exponent = BigInt::from(k);
         let modulus = BigInt::from(self.p);
         let first = BigInt::from(self.g).modpow(&exponent,&modulus);
@@ -41,8 +41,8 @@ impl ZKPProver for ChaumPedersenProver {
         (first.to_i64().unwrap(),second.to_i64().unwrap())
     }
 
-    fn generate_challenge(&self,k:i64, secret:i64, c: i64) -> i64 {
-        (k - c*(secret)) % self.q as i64
+    fn generate_challenge(&self,k:u32, secret:i64, c: i64) -> i64 {
+        (k as i64 - c*(secret)) % self.q as i64
     }
 
 

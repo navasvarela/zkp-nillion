@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // III. Send Commitment and receive Challenge
 
     // Generate random k 
-    let k: i64 = rand::thread_rng().gen();
+    let k: u32 = rand::thread_rng().gen();
 
     // Generate commitment
     let commitment = prover.generate_commitment(k);
