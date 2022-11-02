@@ -16,6 +16,7 @@ The following dependencies were used:
 ## Limitations
 
 The code presented here is valid for testing purposes only. If we wanted this code to support a real life use case we should improve it. 
+
 ### Storage
 
 The code uses basic in-memory storage for Authentications as well as User registrations. The storage is backed by a Hashmap using `Arc` and `Mutex` for simple thread safety. 

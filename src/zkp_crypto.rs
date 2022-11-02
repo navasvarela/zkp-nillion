@@ -35,9 +35,9 @@ pub struct ChaumPedersenAttrs {
 /// then X^(p-1/q) generates a group of order 1 or q.
 pub fn generate_keys() -> ChaumPedersenAttrs {
     let mut rng = rand::thread_rng();
-    // This is the lower limit for the prime p.
-    // For simplicity we generate random numbers up to 100. 
-    let lower: u32 = rng.gen();
+    // This is the lower limit for the order of the group.
+    // For simplicity we generate random numbers up to 1e6. 
+    let lower: u32 = rng.gen_range(1..1_000_000);
 
     // Generate a prime number using Eratostenes's Sieve
     let mut pset = Sieve::new();

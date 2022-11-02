@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // IV. Verify Authentication.
     let answer_response = client.verify_authentication(answer_request).await?.into_inner();
 
-    println!("Authentication Answer - Session ID: {}", answer_response.session_id);
+    println!("Authentication SUCCESS - Session ID: {}", answer_response.session_id);
 
     Ok(())
 }
