@@ -1,6 +1,6 @@
 //! Cryptographic calculations for ZKP Chaum Pedersen protocol.
 //! 
-//! This is a very naive module that is produced to generate
+//! This is a very naive module whose purpose is to generate
 //! values needed for a Chaum-Pedersen protocol run. Just for the purpose of testing.
 //! 
 //! It relies on the crate `primes` to generate and validate primes.
@@ -37,21 +37,21 @@ pub fn generate_keys() -> ChaumPedersenAttrs {
     let mut rng = rand::thread_rng();
     // This is the lower limit for the prime p.
     // For simplicity we generate random numbers up to 100. 
-    let lower: u64 = rng.gen_range(7..200);
+    let lower: u32 = rng.gen();
 
     // Generate a prime number using Eratostenes's Sieve
     let mut pset = Sieve::new();
     let mut q: u64 = 0;
     let mut p = 0;
     while p == 0 {
-        q = pset.find(lower).1;
+        q = pset.find(lower as u64).1;
         p = find_modulus(q);
     }
 
-    let g = find_key(p,q);
+    let g = find_group_generator(p,q);
     let mut h: u64 = 1;
     while h == 1 {
-        h = find_key(p,q);
+        h = find_group_generator(p,q);
     }
 
     ChaumPedersenAttrs{
@@ -62,7 +62,7 @@ pub fn generate_keys() -> ChaumPedersenAttrs {
     }
 }
 
-fn find_key(p: u64, q: u64) -> u64 {
+fn find_group_generator(p: u64, q: u64) -> u64 {
     println!("Finding Key for p:{} and q:{}",p,q);
     let mut rng = rand::thread_rng();
     let mut random: u64;
@@ -83,6 +83,17 @@ fn find_key(p: u64, q: u64) -> u64 {
     key
 }
 
+/// Find the modulus for a given prime 
+/// 
+/// This function finds a prime number p
+/// that can be used as a modulus for a group or prime order q.
+/// 
+/// The quality that p must fulfill is that q must divide evenly p - 1.
+/// In other words, p-1 is a multiplier of q.
+/// 
+/// # Arguments
+/// 
+/// * `q` - An unsigned integer, must be a prime number. 
 fn find_modulus(q: u64) -> u64 {
     let mut p;
     for n in 2..100 {  
